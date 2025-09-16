@@ -1,0 +1,159 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Luxury Equestrian Color Palette */
+  --color-deep-forest: #1B3B2A;
+  --color-rich-burgundy: #5D2C2C;
+  --color-warm-brown: #8B4513;
+  --color-cream-beige: #F5F5DC;
+  --color-sage-green: #9CAF88;
+  --color-earth-brown: #6B4423;
+  --color-soft-taupe: #D2B48C;
+  --color-charcoal: #36454F;
+  
+  /* Typography */
+  --font-elegant: 'Cormorant Garamond', serif;
+  --font-modern: 'Inter', sans-serif;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-modern);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--color-cream-beige);
+  color: var(--color-charcoal);
+}
+
+/* Custom Design System Classes */
+.font-elegant {
+  font-family: var(--font-elegant);
+}
+
+.font-modern {
+  font-family: var(--font-modern);
+}
+
+.bg-deep-forest {
+  background-color: var(--color-deep-forest);
+}
+
+.bg-rich-burgundy {
+  background-color: var(--color-rich-burgundy);
+}
+
+.bg-warm-brown {
+  background-color: var(--color-warm-brown);
+}
+
+.bg-cream-beige {
+  background-color: var(--color-cream-beige);
+}
+
+.bg-sage-green {
+  background-color: var(--color-sage-green);
+}
+
+.bg-earth-brown {
+  background-color: var(--color-earth-brown);
+}
+
+.bg-soft-taupe {
+  background-color: var(--color-soft-taupe);
+}
+
+.text-deep-forest {
+  color: var(--color-deep-forest);
+}
+
+.text-rich-burgundy {
+  color: var(--color-rich-burgundy);
+}
+
+.text-warm-brown {
+  color: var(--color-warm-brown);
+}
+
+.text-cream-beige {
+  color: var(--color-cream-beige);
+}
+
+.text-sage-green {
+  color: var(--color-sage-green);
+}
+
+.text-earth-brown {
+  color: var(--color-earth-brown);
+}
+
+.text-soft-taupe {
+  color: var(--color-soft-taupe);
+}
+
+.text-charcoal {
+  color: var(--color-charcoal);
+}
+
+.btn-luxury {
+  background: linear-gradient(135deg, var(--color-deep-forest), var(--color-rich-burgundy));
+  color: var(--color-cream-beige);
+  border: none;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(27, 59, 42, 0.3);
+}
+
+.btn-luxury:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(27, 59, 42, 0.4);
+}
+
+.btn-secondary-luxury {
+  background-color: transparent;
+  color: var(--color-deep-forest);
+  border: 2px solid var(--color-deep-forest);
+  transition: all 0.3s ease;
+}
+
+.btn-secondary-luxury:hover {
+  background-color: var(--color-deep-forest);
+  color: var(--color-cream-beige);
+}
+
+.card-luxury {
+  background: var(--color-cream-beige);
+  border: 1px solid var(--color-soft-taupe);
+  box-shadow: 0 8px 32px rgba(27, 59, 42, 0.1);
+  transition: all 0.3s ease;
+}
+
+.card-luxury:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(27, 59, 42, 0.15);
+}
+
+.form-input-luxury {
+  background-color: var(--color-cream-beige);
+  border: 2px solid var(--color-soft-taupe);
+  transition: all 0.3s ease;
+}
+
+.form-input-luxury:focus {
+  outline: none;
+  border-color: var(--color-sage-green);
+  box-shadow: 0 0 0 3px rgba(156, 175, 136, 0.2);
+}
+
+.hero-gradient {
+  background: linear-gradient(135deg, var(--color-deep-forest) 0%, var(--color-rich-burgundy) 50%, var(--color-warm-brown) 100%);
+}
+
+.nature-overlay {
+  background: linear-gradient(rgba(27, 59, 42, 0.7), rgba(93, 44, 44, 0.5));
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}

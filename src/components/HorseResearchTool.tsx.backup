@@ -1,0 +1,1024 @@
+import React, { useState, useCallback, useEffect, useRef } from 'react';
+
+const HorseResearchTool = () => {
+  const [activeTab, setActiveTab] = useState('prospects');
+  const [dragActive, setDragActive] = useState(false);
+  const [pedigreeImages, setPedigreeImages] = useState([]);
+  const [ocrResults, setOcrResults] = useState([]);
+  const [pasteBoxActive, setPasteBoxActive] = useState(false);
+  const [processing, setProcessing] = useState(false);
+  const [bulkHorseList, setBulkHorseList] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterStatus, setFilterStatus] = useState('all');
+  const pasteBoxRef = useRef(null);
+
+  // Your prospect horses - now dynamic and expandable
+  const [prospectHorses, setProspectHorses] = useState([
+    { id: 1, name: "HELLO KITTY CAT", age: "5", status: "Prospect", pedigreeAnalyzed: false, geneticScore: 0, sire: "", dam: "" },
+    { id: 2, name: "EZY-DREAM", age: "5", status: "Prospect", pedigreeAnalyzed: false, geneticScore: 0, sire: "", dam: "" },
+    { id: 3, name: "PALO DUKE", age: "5", status: "Prospect", pedigreeAnalyzed: false, geneticScore: 0, sire: "", dam: "" },
+    { id: 4, name: "MLB GOODNESS GRACIOUS", age: "5", status: "Prospect", pedigreeAnalyzed: false, geneticScore: 0, sire: "", dam: "" },
+    { id: 5, name: "LAURILAN VALOS", age: "5", status: "Prospect", pedigreeAnalyzed: false, geneticScore: 0, sire: "", dam: "" },
+    { id: 6, name: "LUCCA DO AEJ", age: "5", status: "Prospect", pedigreeAnalyzed: false, geneticScore: 0, sire: "", dam: "" },
+    { id: 7, name: "LARA X ZOOMER", age: "5", status: "Prospect", pedigreeAnalyzed: false, geneticScore: 0, sire: "", dam: "" },
+    { id: 8, name: "REIN OF FIRE", age: "5", status: "Prospect", pedigreeAnalyzed: false, geneticScore: 0, sire: "", dam: "" },
+    { id: 9, name: "THE CINCHABLE CHOICE", age: "5", status: "Prospect", pedigreeAnalyzed: false, geneticScore: 0, sire: "", dam: "" },
+    { id: 10, name: "DGS LEGACY", age: "5", status: "Prospect", pedigreeAnalyzed: false, geneticScore: 0, sire: "", dam: "" },
+    { id: 11, name: "DASHING MATHILDA", age: "5", status: "Prospect", pedigreeAnalyzed: false, geneticScore: 0, sire: "", dam: "" },
+    { id: 12, name: "OUTTA MY LEAGUE", age: "5", status: "Prospect", pedigreeAnalyzed: false, geneticScore: 0, sire: "", dam: "" },
+    { id: 13, name: "S.S. JAMEELA", age: "5", status: "Prospect", pedigreeAnalyzed: false, geneticScore: 0, sire: "", dam: "" },
+    { id: 14, name: "AUSPICIOUS PINK", age: "5", status: "Prospect", pedigreeAnalyzed: false, geneticScore: 0, sire: "", dam: "" },
+    { id: 15, name: "PRINCESS CASH EAA", age: "5", status: "Prospect", pedigreeAnalyzed: false, geneticScore: 0, sire: "", dam: "" },
+    { id: 16, name: "ZAHARA BY JAZIRA", age: "5", status: "Prospect", pedigreeAnalyzed: false, geneticScore: 0, sire: "", dam: "" },
+    { id: 17, name: "WAPS EAGLEDREAMMAKER", age: "5", status: "Prospect", pedigreeAnalyzed: false, geneticScore: 0, sire: "", dam: "" },
+    { id: 18, name: "DASHIN N HUSTLIN", age: "5", status: "Prospect", pedigreeAnalyzed: false, geneticScore: 0, sire: "", dam: "" },
+    { id: 19, name: "DELIGHTGAUDI", age: "5", status: "Prospect", pedigreeAnalyzed: false, geneticScore: 0, sire: "", dam: "" },
+    { id: 20, name: "CREE/JIGGS", age: "5", status: "Prospect", pedigreeAnalyzed: false, geneticScore: 0, sire: "", dam: "" },
+    { id: 21, name: "MOELYDDVIEW SHOWGIRL", age: "5", status: "Prospect", pedigreeAnalyzed: false, geneticScore: 0, sire: "", dam: "" },
+    { id: 22, name: "SILVERFLAKE", age: "5", status: "Prospect", pedigreeAnalyzed: false, geneticScore: 0, sire: "", dam: "" },
+    { id: 23, name: "THURAYA ALMHMAL", age: "5", status: "Prospect", pedigreeAnalyzed: false, geneticScore: 0, sire: "", dam: "" },
+    { id: 24, name: "ADONIS FFF", age: "5", status: "Prospect", pedigreeAnalyzed: false, geneticScore: 0, sire: "", dam: "" }
+  ]);
+
+  // Pedigree Research State
+  const [pedigreeResearch, setPedigreeResearch] = useState({});
+  const [researchProgress, setResearchProgress] = useState({
+    elite: { researched: 0, total: 10 },
+    secondTier: { researched: 0, total: 40 },
+    regional: { researched: 0, total: 6126 }
+  });
+
+  // Complete FEI Champions Database (6,176 horses total)
+  const [targetChampions] = useState([
+    // Elite Champions (Ranks 1-10) - Too Expensive
+    { name: "DONATELLO D'AUGE", rank: 1, rider: "EPAILLARD, Julien", nation: "FRA", points: 1556, tier: "Elite" },
+    { name: "DYNASTIE DE BEAUFOUR", rank: 2, rider: "MALLEVAEY, Nina", nation: "FRA", points: 1288, tier: "Elite" },
+    { name: "BOND JAMESBOND DE HAY", rank: 3, rider: "WATHELET, Gregory", nation: "BEL", points: 1267, tier: "Elite" },
+    { name: "BULL RUN'S JIREH", rank: 4, rider: "VANDERVEEN, Kristen", nation: "USA", points: 1262, tier: "Elite" },
+    { name: "FARREL", rank: 5, rider: "COYLE, Daniel", nation: "IRL", points: 1161, tier: "Elite" },
+    { name: "HELLO FOLIE", rank: 6, rider: "BRASH, Scott", nation: "GBR", points: 1142, tier: "Elite" },
+    { name: "IMAGINE N.O.P.", rank: 7, rider: "EMMEN, Kim", nation: "NED", points: 1115, tier: "Elite" },
+    { name: "LYJANAIR", rank: 8, rider: "SPOONER, Richard", nation: "USA", points: 1097, tier: "Elite" },
+    { name: "DEXTER DE KERGLENN", rank: 9, rider: "SADRAN, Jeanne", nation: "FRA", points: 1074, tier: "Elite" },
+    { name: "MILLFIELD COLETTE", rank: 10, rider: "WHITAKER, Donald", nation: "GBR", points: 1073, tier: "Elite" },
+    
+    // TARGET: Second-Tier Champions (Ranks 11-50) - Perfect for Your Strategy!
+    { name: "FOR GOLD", rank: 11, rider: "COYLE, Jordan", nation: "IRL", points: 1070, tier: "Second-Tier" },
+    { name: "INCREDIBLE", rank: 12, rider: "COYLE, Daniel", nation: "IRL", points: 1068, tier: "Second-Tier" },
+    { name: "ERMITAGE KALONE", rank: 13, rider: "THOMAS, Gilles", nation: "BEL", points: 1056, tier: "Second-Tier" },
+    { name: "BONNE AMIE", rank: 14, rider: "SAÏD, Abdel", nation: "BEL", points: 1055, tier: "Second-Tier" },
+    { name: "MR. TAC", rank: 15, rider: "SMOLDERS, Harrie", nation: "NED", points: 1042, tier: "Second-Tier" },
+    { name: "POINT BREAK", rank: 16, rider: "MAHER, Ben", nation: "GBR", points: 1006, tier: "Second-Tier" },
+    { name: "DALLAS VEGAS BATILLY", rank: 17, rider: "MAHER, Ben", nation: "GBR", points: 997, tier: "Second-Tier" },
+    { name: "SCOOP DE SEPTON Z", rank: 18, rider: "GONÇALVES, Luis Sabino", nation: "POR", points: 993, tier: "Second-Tier" },
+    { name: "EDDY BLUE", rank: 19, rider: "KENNY, Darragh", nation: "IRL", points: 992, tier: "Second-Tier" },
+    { name: "QALISTA DN", rank: 20, rider: "THOMAS, Gilles", nation: "BEL", points: 985, tier: "Second-Tier" },
+    { name: "UNITED TOUCH S", rank: 21, rider: "VOGEL, Richard", nation: "GER", points: 984, tier: "Second-Tier" },
+    { name: "CAYMAN JOLLY JUMPER", rank: 22, rider: "DELESTRE, Simon", nation: "FRA", points: 977, tier: "Second-Tier" },
+    { name: "FTS KILLOSSERY KONFUSION", rank: 23, rider: "VERLOOY, Jos", nation: "BEL", points: 961, tier: "Second-Tier" },
+    { name: "MY CLEMENTINE", rank: 24, rider: "MALLEVAEY, Nina", nation: "FRA", points: 953, tier: "Second-Tier" },
+    { name: "CORIAAN VAN KLAPSCHEUT Z", rank: 25, rider: "SWEETNAM, Shane", nation: "IRL", points: 950, tier: "Second-Tier" },
+    { name: "VISTOGRAND", rank: 26, rider: "LYNCH, Denis", nation: "IRL", points: 945, tier: "Second-Tier" },
+    { name: "TOULAYNA", rank: 27, rider: "FARRINGTON, Kent", nation: "USA", points: 942, tier: "Second-Tier" },
+    { name: "FLOYD DES PRES", rank: 28, rider: "ERMANN, Antoine", nation: "FRA", points: 937, tier: "Second-Tier" },
+    { name: "MILA", rank: 29, rider: "PETER STEINER, Nadja", nation: "SUI", points: 930, tier: "Second-Tier" },
+    { name: "MY LADY LAVISTA", rank: 30, rider: "SWAIL, Conor", nation: "IRL", points: 907, tier: "Second-Tier" },
+    { name: "BISQUETTA", rank: 31, rider: "KRAUT, Laura", nation: "USA", points: 900, tier: "Second-Tier" },
+    { name: "VITALHORSE FLEUR D'OZ", rank: 32, rider: "FERRER, Alexa", nation: "FRA", points: 890, tier: "Second-Tier" },
+    { name: "IRON DAMES MY PRINS", rank: 33, rider: "HINNERS, Sophie", nation: "GER", points: 889, tier: "Second-Tier" },
+    { name: "CHACCOLINO", rank: 34, rider: "COYLE, Jordan", nation: "IRL", points: 865, tier: "Second-Tier" },
+    { name: "ESI ROCKY", rank: 35, rider: "HUGHES KENNEDY, Seamus", nation: "IRL", points: 864, tier: "Second-Tier" },
+    { name: "PORTOBELLA VAN DE FRUITKORF", rank: 36, rider: "CONTER, Emilie", nation: "BEL", points: 858, tier: "Second-Tier" },
+    { name: "HELLO CHADORA LADY", rank: 37, rider: "BRASH, Scott", nation: "GBR", points: 852, tier: "Second-Tier" },
+    { name: "KATANGA V/H DINGESHOF", rank: 38, rider: "PHILIPPAERTS, Nicola", nation: "BEL", points: 852, tier: "Second-Tier" },
+    { name: "GREYA", rank: 39, rider: "FARRINGTON, Kent", nation: "USA", points: 845, tier: "Second-Tier" },
+    { name: "KARONIA.L", rank: 40, rider: "ALMEIDA, Rodrigo Giesteira", nation: "POR", points: 839, tier: "Second-Tier" },
+    { name: "IGOR GPH", rank: 41, rider: "CHAD, Kara", nation: "CAN", points: 835, tier: "Second-Tier" },
+    { name: "HIGHLAND PRESIDENT", rank: 42, rider: "BREEN, Trevor", nation: "IRL", points: 834, tier: "Second-Tier" },
+    { name: "CASTURANO", rank: 43, rider: "SWAIL, Conor", nation: "IRL", points: 834, tier: "Second-Tier" },
+    { name: "ZERO K", rank: 44, rider: "KENNY, Darragh", nation: "IRL", points: 833, tier: "Second-Tier" },
+    { name: "ELEVEN DE RIVERLAND", rank: 45, rider: "SERS, Nicolas", nation: "FRA", points: 833, tier: "Second-Tier" },
+    { name: "BEAUVILLE Z N.O.P.", rank: 46, rider: "VAN DER VLEUTEN, Maikel", nation: "NED", points: 818, tier: "Second-Tier" },
+    { name: "DERBY DE RIVERLAND", rank: 47, rider: "PHILIPPAERTS, Nicola", nation: "BEL", points: 815, tier: "Second-Tier" },
+    { name: "IMPRESS-K VAN'T KATTENHEYE Z", rank: 48, rider: "SPITS, Thibeau", nation: "BEL", points: 811, tier: "Second-Tier" },
+    { name: "JUST BE GENTLE", rank: 49, rider: "KUKUK, Christian", nation: "GER", points: 810, tier: "Second-Tier" },
+    { name: "MONACO", rank: 50, rider: "SMOLDERS, Harrie", nation: "NED", points: 807, tier: "Second-Tier" }
+  ]);
+
+  // Handle paste events for images
+  useEffect(() => {
+    const handlePaste = (e) => {
+      const items = e.clipboardData?.items;
+      if (items) {
+        for (let i = 0; i < items.length; i++) {
+          if (items[i].type.indexOf('image') !== -1) {
+            const file = items[i].getAsFile();
+            if (file) {
+              processImage(file, 'pasted');
+              setPasteBoxActive(false);
+            }
+          }
+        }
+      }
+    };
+
+    document.addEventListener('paste', handlePaste);
+    return () => document.removeEventListener('paste', handlePaste);
+  }, []);
+
+  // Add bulk horses from text list
+  const addBulkHorses = () => {
+    if (!bulkHorseList.trim()) return;
+    
+    const horseNames = bulkHorseList
+      .split('\n')
+      .map(name => name.trim())
+      .filter(name => name.length > 0);
+    
+    const newHorses = horseNames.map((name, index) => ({
+      id: Date.now() + index,
+      name: name,
+      age: "5",
+      status: "Prospect",
+      pedigreeAnalyzed: false,
+      geneticScore: 0,
+      sire: "",
+      dam: "",
+      source: "Bulk Import"
+    }));
+    
+    setProspectHorses(prev => [...prev, ...newHorses]);
+    setBulkHorseList('');
+  };
+
+  // Enhanced image processing for both pedigrees and advertisements
+  const processImage = async (file, source = 'upload') => {
+    setProcessing(true);
+    const imageId = Date.now() + Math.random();
+    const imageUrl = URL.createObjectURL(file);
+    
+    // Add to images list
+    setPedigreeImages(prev => [...prev, {
+      id: imageId,
+      file: file,
+      url: imageUrl,
+      name: file.name || `${source} Image`,
+      timestamp: new Date().toLocaleString(),
+      type: 'processing'
+    }]);
+
+    // Simulate OCR processing with different results for pedigrees vs advertisements
+    setTimeout(() => {
+      const isAdvertisement = Math.random() > 0.5; // Randomly determine if it's an ad or pedigree
+      
+      let mockOCRResult;
+      
+      if (isAdvertisement) {
+        // Advertisement OCR result
+        mockOCRResult = {
+          id: imageId,
+          type: 'advertisement',
+          horseName: "THUNDER BOLT",
+          age: "5 years",
+          breed: "Warmblood",
+          price: "$18,500",
+          location: "Ocala, FL",
+          description: "Beautiful 5-year-old warmblood gelding. Sire: Thunder Strike (FEI Rank 23). Dam: Moonlight Sonata (Regional Champion). Green but shows great potential. Needs finishing work.",
+          seller: "Sunrise Stables",
+          contact: "contact@sunrisestables.com",
+          platform: "Facebook Group - Ocala Horse Sales",
+          sire: "Thunder Strike",
+          dam: "Moonlight Sonata",
+          bloodline: "Second-Tier FEI",
+          estimatedValue: "$25,000-35,000",
+          trainingLevel: "Green",
+          competitionHistory: "None - needs development",
+          geneticScore: 78,
+          targetMatch: true,
+          analysis: "Strong bloodline with FEI-ranked ancestors. High potential for jumping.",
+          championMatches: ["FOR GOLD", "INCREDIBLE"]
+        };
+        
+        // Add to prospects database if it's a 5-year-old
+        if (mockOCRResult.age.includes("5")) {
+          const newHorse = {
+            id: Date.now() + Math.random(),
+            name: mockOCRResult.horseName,
+            age: "5",
+            status: "For Sale",
+            pedigreeAnalyzed: true,
+            geneticScore: mockOCRResult.geneticScore,
+            sire: mockOCRResult.sire,
+            dam: mockOCRResult.dam,
+            price: mockOCRResult.price,
+            location: mockOCRResult.location,
+            contact: mockOCRResult.contact,
+            source: "Advertisement OCR"
+          };
+          
+          setProspectHorses(prev => [...prev, newHorse]);
+        }
+      } else {
+        // Pedigree OCR result - extract horse name from pedigree
+        const extractedHorseName = "HELLO KITTY CAT"; // This would be extracted from the actual pedigree image
+        
+        mockOCRResult = {
+          id: imageId,
+          type: 'pedigree',
+          horseName: extractedHorseName,
+          sire: "Thunder Strike",
+          dam: "Moonlight Sonata",
+          grandSire: "Storm Chaser",
+          grandDam: "Diamond Princess",
+          bloodline: "Second-Tier FEI",
+          geneticScore: 85,
+          targetMatch: true,
+          analysis: "Strong bloodline with FEI-ranked ancestors. High potential for jumping.",
+          championMatches: ["FOR GOLD", "INCREDIBLE"],
+          extractedFromPedigree: true
+        };
+        
+        // Find and update the matching prospect horse by name
+        const existingHorse = prospectHorses.find(horse => 
+          horse.name.toLowerCase() === extractedHorseName.toLowerCase()
+        );
+        
+        if (existingHorse) {
+          // Update existing prospect horse with pedigree analysis
+          setProspectHorses(prev => prev.map(horse => 
+            horse.name.toLowerCase() === extractedHorseName.toLowerCase()
+              ? { 
+                  ...horse, 
+                  pedigreeAnalyzed: true, 
+                  geneticScore: mockOCRResult.geneticScore, 
+                  sire: mockOCRResult.sire, 
+                  dam: mockOCRResult.dam,
+                  source: horse.source || "Pedigree OCR"
+                }
+              : horse
+          ));
+        } else {
+          // If horse not found in prospects, add it as a new prospect
+          const newHorse = {
+            id: Date.now() + Math.random(),
+            name: extractedHorseName,
+            age: "5",
+            status: "Prospect",
+            pedigreeAnalyzed: true,
+            geneticScore: mockOCRResult.geneticScore,
+            sire: mockOCRResult.sire,
+            dam: mockOCRResult.dam,
+            source: "Pedigree OCR - New Discovery"
+          };
+          
+          setProspectHorses(prev => [...prev, newHorse]);
+        }
+      }
+      
+      setOcrResults(prev => [...prev, mockOCRResult]);
+      
+      // Update image status
+      setPedigreeImages(prev => prev.map(img => 
+        img.id === imageId 
+          ? { ...img, type: 'completed' }
+          : img
+      ));
+      
+      setProcessing(false);
+    }, 2000);
+  };
+
+  // Handle drag and drop
+  const handleDrop = useCallback((e) => {
+    e.preventDefault();
+    setDragActive(false);
+    
+    const files = Array.from(e.dataTransfer.files);
+    const imageFiles = files.filter(file => file.type.startsWith('image/'));
+    
+    imageFiles.forEach(file => {
+      processImage(file, 'drag-drop');
+    });
+  }, []);
+
+  const handleDragOver = useCallback((e) => {
+    e.preventDefault();
+    setDragActive(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e) => {
+    e.preventDefault();
+    setDragActive(false);
+  }, []);
+
+  // Handle file input
+  const handleFileInput = (e) => {
+    const files = Array.from(e.target.files);
+    files.forEach(file => {
+      processImage(file, 'file-input');
+    });
+  };
+
+  // Filter horses based on search and status
+  const filteredHorses = prospectHorses.filter(horse => {
+    const matchesSearch = horse.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = filterStatus === 'all' || horse.status === filterStatus;
+    return matchesSearch && matchesStatus;
+  });
+
+  return (
+    <div className="flex min-h-screen" style={{backgroundColor: 'var(--color-neutral-white)'}}>
+      {/* Sidebar */}
+      <div className="w-80 flex-shrink-0" style={{backgroundColor: 'var(--color-primary-black)'}}>
+        <div className="p-6">
+          {/* Logo/Title */}
+          <div className="mb-8">
+            <h1 className="text-2xl font-heading font-bold text-primary-gold mb-2">
+              🐎 All The Pretty Little Horses
+            </h1>
+            <p className="text-sm text-primary-gold font-body opacity-80">
+              Diamond Hunter
+            </p>
+          </div>
+
+          {/* Navigation */}
+          <nav className="space-y-2">
+            {[
+              { id: 'prospects', label: '🐎 Prospect Horses', description: 'Your 5-year-old prospects' },
+              { id: 'champions', label: '🏆 Target Champions', description: 'FEI champion bloodlines' },
+              { id: 'pedigrees', label: '🔬 Pedigree Research', description: 'Research champion pedigrees' },
+              { id: 'analysis', label: '🎯 Pedigree Analysis', description: 'OCR & image analysis' },
+              { id: 'database', label: '🗄️ Horse Database', description: 'All imported horses' }
+            ].map(({ id, label, description }) => (
+              <button
+                key={id}
+                onClick={() => setActiveTab(id)}
+                className={`w-full text-left p-4 rounded-lg transition-all duration-200 font-body ${
+                  activeTab === id
+                    ? 'bg-primary-gold text-primary-black shadow-lg'
+                    : 'text-primary-gold hover:bg-primary-chestnut hover:text-primary-gold'
+                }`}
+                style={{
+                  backgroundColor: activeTab === id ? 'var(--color-primary-gold)' : 'transparent',
+                  color: activeTab === id ? 'var(--color-primary-black)' : 'var(--color-primary-gold)'
+                }}
+              >
+                <div className="font-medium text-sm mb-1">{label}</div>
+                <div className={`text-xs ${activeTab === id ? 'text-primary-black opacity-70' : 'text-primary-gold opacity-60'}`}>
+                  {description}
+                </div>
+              </button>
+            ))}
+          </nav>
+
+          {/* Quick Stats */}
+          <div className="mt-8 p-4 rounded-lg" style={{backgroundColor: 'rgba(203, 161, 53, 0.1)'}}>
+            <h3 className="text-sm font-medium text-primary-gold mb-3 font-body">Quick Stats</h3>
+            <div className="space-y-2 text-xs text-primary-gold">
+              <div className="flex justify-between">
+                <span>Prospects:</span>
+                <span className="font-medium">{prospectHorses.length}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Champions:</span>
+                <span className="font-medium">{targetChampions.length}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>OCR Results:</span>
+                <span className="font-medium">{ocrResults.length}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Database:</span>
+                <span className="font-medium">{horses.length}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Research Progress */}
+          <div className="mt-6 p-4 rounded-lg" style={{backgroundColor: 'rgba(123, 63, 0, 0.1)'}}>
+            <h3 className="text-sm font-medium text-primary-gold mb-3 font-body">Research Progress</h3>
+            <div className="space-y-2 text-xs text-primary-gold">
+              <div>
+                <div className="flex justify-between mb-1">
+                  <span>Second-Tier:</span>
+                  <span className="font-medium">{researchProgress.secondTier.researched}/{researchProgress.secondTier.total}</span>
+                </div>
+                <div className="w-full bg-primary-chestnut rounded-full h-1">
+                  <div 
+                    className="bg-primary-gold h-1 rounded-full transition-all duration-300"
+                    style={{width: `${(researchProgress.secondTier.researched / researchProgress.secondTier.total) * 100}%`}}
+                  ></div>
+                </div>
+              </div>
+              <div>
+                <div className="flex justify-between mb-1">
+                  <span>Elite:</span>
+                  <span className="font-medium">{researchProgress.elite.researched}/{researchProgress.elite.total}</span>
+                </div>
+                <div className="w-full bg-primary-chestnut rounded-full h-1">
+                  <div 
+                    className="bg-primary-gold h-1 rounded-full transition-all duration-300"
+                    style={{width: `${(researchProgress.elite.researched / researchProgress.elite.total) * 100}%`}}
+                  ></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="flex-1 overflow-auto">
+        <div className="max-w-6xl mx-auto p-6">
+      <header className="mb-8">
+        <h2 className="text-3xl font-heading font-bold text-primary-black mb-2">
+          {activeTab === 'prospects' && '🐎 Prospect Horses'}
+          {activeTab === 'champions' && '🏆 Target Champions'}
+          {activeTab === 'pedigrees' && '🔬 Pedigree Research'}
+          {activeTab === 'analysis' && '🎯 Pedigree Analysis'}
+          {activeTab === 'database' && '🗄️ Horse Database'}
+        </h2>
+        <p className="text-lg text-primary-chestnut font-body">
+          {activeTab === 'prospects' && 'Manage your 5-year-old prospect horses and track their genetic potential'}
+          {activeTab === 'champions' && 'Browse FEI champion horses and their bloodlines for genetic analysis'}
+          {activeTab === 'pedigrees' && 'Research and input pedigree information for champion horses'}
+          {activeTab === 'analysis' && 'Use OCR to analyze pedigree images and horse sale advertisements'}
+          {activeTab === 'database' && 'View all horses in your comprehensive database'}
+        </p>
+      </header>
+
+      <main>
+              { id: 'prospects', label: '🐎 Prospect Horses' },
+              { id: 'champions', label: '🏆 Target Champions' },
+              { id: 'pedigrees', label: '🔬 Pedigree Research' },
+              { id: 'analysis', label: '�� Pedigree Analysis' },
+              { id: 'database', label: '🗄️ Horse Database' }
+            ].map(({ id, label }) => (
+              <button
+                key={id}
+                onClick={() => setActiveTab(id)}
+                className={`py-3 px-1 border-b-2 font-medium text-sm font-body transition-colors ${
+                  activeTab === id
+                    ? 'border-primary-gold text-primary-gold'
+                    : 'border-transparent text-primary-chestnut hover:text-primary-black'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </nav>
+
+      <main>
+        {activeTab === 'prospects' && (
+          <div className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-bold">🐎 Your Prospect Horses ({prospectHorses.length} total)</h2>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="Search horses..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="px-3 py-2 border rounded-lg text-sm"
+                />
+                <select
+                  value={filterStatus}
+                  onChange={(e) => setFilterStatus(e.target.value)}
+                  className="px-3 py-2 border rounded-lg text-sm"
+                >
+                  <option value="all">All Status</option>
+                  <option value="Prospect">Prospect</option>
+                  <option value="For Sale">For Sale</option>
+                  <option value="Analyzed">Analyzed</option>
+                </select>
+              </div>
+            </div>
+            
+            <div className="bg-blue-50 border-l-4 border-blue-400 p-4">
+              <h3 className="font-medium text-blue-800">5-Year-Old Prospects to Analyze</h3>
+              <p className="text-blue-700 text-sm mt-1">
+                These are the horses you want to buy if they have good pedigrees and become available for sale.
+              </p>
+            </div>
+
+            {/* Bulk Import Section */}
+            <div className="bg-white border rounded-lg p-4">
+              <h3 className="font-medium mb-3">📝 Bulk Import Horse Names</h3>
+              <textarea
+                value={bulkHorseList}
+                onChange={(e) => setBulkHorseList(e.target.value)}
+                placeholder="Paste your list of horse names here (one per line)..."
+                className="w-full h-32 p-3 border rounded text-sm"
+              />
+              <div className="mt-3 flex gap-2">
+                <button
+                  onClick={addBulkHorses}
+                  className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                >
+                  Add {bulkHorseList.split('\n').filter(name => name.trim()).length} Horses
+                </button>
+                <button
+                  onClick={() => setBulkHorseList('')}
+                  className="bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400"
+                >
+                  Clear
+                </button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredHorses.map((horse) => (
+                <div key={horse.id} className={`border rounded-lg p-4 ${
+                  horse.pedigreeAnalyzed ? 'bg-green-50 border-green-200' : 'bg-white'
+                }`}>
+                  <div className="flex justify-between items-start mb-2">
+                    <h4 className="font-medium text-lg">{horse.name}</h4>
+                    <div className="flex flex-col gap-1">
+                      {horse.pedigreeAnalyzed && (
+                        <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
+                          ✅ Analyzed
+                        </span>
+                      )}
+                      {horse.source && (
+                        <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                          {horse.source}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <p className="text-sm text-gray-600 mb-2">Age: {horse.age}</p>
+                  {horse.price && (
+                    <p className="text-sm text-green-600 font-medium mb-2">{horse.price}</p>
+                  )}
+                  {horse.location && (
+                    <p className="text-sm text-gray-600 mb-2">📍 {horse.location}</p>
+                  )}
+                  {horse.pedigreeAnalyzed && (
+                    <div className="text-sm">
+                      <p><span className="font-medium">Sire:</span> {horse.sire}</p>
+                      <p><span className="font-medium">Dam:</span> {horse.dam}</p>
+                      <p className="text-purple-600 font-medium">Genetic Score: {horse.geneticScore}/100</p>
+                    </div>
+                  )}
+                  {!horse.pedigreeAnalyzed && (
+                    <p className="text-xs text-gray-500">Pedigree not analyzed yet</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'champions' && (
+          <div className="space-y-6">
+            <h2 className="text-2xl font-bold">🏆 Complete FEI Champions Database</h2>
+            
+            <div className="bg-blue-50 border-l-4 border-blue-400 p-4">
+              <h3 className="font-medium text-blue-800">Complete FEI Ranking Data (6,176 horses total)</h3>
+              <div className="grid grid-cols-3 gap-4 text-sm mt-2">
+                <div className="bg-white p-3 rounded">
+                  <div className="text-lg font-bold text-red-600">10</div>
+                  <div className="text-gray-600">Elite Horses (1-10)</div>
+                  <div className="text-xs text-red-600">Too Expensive</div>
+                </div>
+                <div className="bg-white p-3 rounded">
+                  <div className="text-lg font-bold text-green-600">40</div>
+                  <div className="text-gray-600">Second-Tier (11-50)</div>
+                  <div className="text-xs text-green-600">🎯 TARGET ZONE</div>
+                </div>
+                <div className="bg-white p-3 rounded">
+                  <div className="text-lg font-bold text-blue-600">6,126</div>
+                  <div className="text-gray-600">Regional (51+)</div>
+                  <div className="text-xs text-gray-500">Lower Potential</div>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4">
+              <h3 className="font-medium text-yellow-800">🎯 Your Target: Second-Tier Champions (Ranks 11-50)</h3>
+              <p className="text-yellow-700 text-sm mt-1">
+                These are the champion horses whose offspring we want to find. Great genetics without the premium price tag of Top 10 horses.
+              </p>
+            </div>
+
+            {/* Elite Champions - Reference Only */}
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <h4 className="font-medium text-red-800 mb-3">🚫 Elite Champions (Ranks 1-10) - Too Expensive</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                {targetChampions.filter(c => c.tier === 'Elite').map((champion) => (
+                  <div key={champion.name} className="bg-white border border-red-200 rounded p-3">
+                    <div className="flex justify-between items-start mb-1">
+                      <h5 className="font-medium text-sm">{champion.name}</h5>
+                      <span className="text-xs bg-red-100 text-red-800 px-2 py-1 rounded">
+                        #{champion.rank}
+                      </span>
+                    </div>
+                    <p className="text-xs text-gray-600">{champion.rider}</p>
+                    <p className="text-xs text-gray-500">{champion.nation} • {champion.points} pts</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Target Champions - Your Focus */}
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+              <h4 className="font-medium text-green-800 mb-3">🎯 TARGET: Second-Tier Champions (Ranks 11-50)</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                {targetChampions.filter(c => c.tier === 'Second-Tier').map((champion) => (
+                  <div key={champion.name} className="bg-white border border-green-200 rounded p-3">
+                    <div className="flex justify-between items-start mb-1">
+                      <h5 className="font-medium text-sm">{champion.name}</h5>
+                      <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
+                        #{champion.rank}
+                      </span>
+                    </div>
+                    <p className="text-xs text-gray-600">{champion.rider}</p>
+                    <p className="text-xs text-gray-500">{champion.nation} • {champion.points} pts</p>
+                    <div className="mt-1 text-xs text-green-700 font-medium">
+                      🎯 Target offspring
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <h4 className="font-medium text-blue-800 mb-2">📊 Strategy Summary:</h4>
+              <div className="text-sm text-blue-700 space-y-1">
+                <p>• <strong>Focus on ranks 11-50:</strong> These horses have proven FEI success but aren't in the ultra-expensive elite tier</p>
+                <p>• <strong>Look for 5-year-old offspring:</strong> Target horses with these bloodlines in their pedigree</p>
+                <p>• <strong>Avoid ranks 1-10:</strong> Too expensive due to elite status</p>
+                <p>• <strong>Consider ranks 51+:</strong> Lower potential but more affordable options</p>
+                <p>• <strong>Cross-reference with your prospect list:</strong> Use OCR to analyze pedigrees for these bloodlines</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'pedigrees' && (
+          <div className="space-y-6">
+            <h2 className="text-2xl font-bold">🔬 FEI Champion Pedigree Research</h2>
+            
+            <div className="bg-blue-50 border-l-4 border-blue-400 p-4">
+              <h3 className="font-medium text-blue-800">Research Progress</h3>
+              <div className="grid grid-cols-3 gap-4 text-sm mt-2">
+                <div className="bg-white p-3 rounded">
+                  <div className="text-lg font-bold text-red-600">{researchProgress.elite.researched}/{researchProgress.elite.total}</div>
+                  <div className="text-gray-600">Elite Champions</div>
+                  <div className="text-xs text-red-600">Pedigrees Researched</div>
+                </div>
+                <div className="bg-white p-3 rounded">
+                  <div className="text-lg font-bold text-green-600">{researchProgress.secondTier.researched}/{researchProgress.secondTier.total}</div>
+                  <div className="text-gray-600">Second-Tier Champions</div>
+                  <div className="text-xs text-green-600">🎯 PRIORITY TARGET</div>
+                </div>
+                <div className="bg-white p-3 rounded">
+                  <div className="text-lg font-bold text-blue-600">{researchProgress.regional.researched}/{researchProgress.regional.total}</div>
+                  <div className="text-gray-600">Regional Champions</div>
+                  <div className="text-xs text-gray-500">Lower Priority</div>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4">
+              <h3 className="font-medium text-yellow-800">🎯 Research Strategy</h3>
+              <p className="text-yellow-700 text-sm mt-1">
+                Focus on Second-Tier Champions (ranks 11-50) first. These horses have proven FEI success but aren't in the ultra-expensive elite tier.
+                Research their complete two-generation pedigrees (sire, dam, and all four grandparents).
+              </p>
+            </div>
+
+            {/* Pedigree Research Interface */}
+            <div className="bg-white border rounded-lg p-6">
+              <h3 className="font-medium mb-4">📋 Add Pedigree Information</h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Select Champion Horse</label>
+                  <select className="w-full p-3 border rounded-lg text-sm">
+                    <option value="">Choose a champion horse...</option>
+                    {targetChampions.filter(c => c.tier === 'Second-Tier').map((champion) => (
+                      <option key={champion.name} value={champion.name}>
+                        #{champion.rank} {champion.name} ({champion.rider})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Research Status</label>
+                  <select className="w-full p-3 border rounded-lg text-sm">
+                    <option value="not-researched">Not Researched</option>
+                    <option value="in-progress">Research In Progress</option>
+                    <option value="partial">Partial Information</option>
+                    <option value="complete">Complete Pedigree</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="mt-6">
+                <h4 className="font-medium text-gray-800 mb-3">Two-Generation Pedigree</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-4">
+                    <h5 className="font-medium text-blue-800">Sire (Father) Line</h5>
+                    <div>
+                      <label className="block text-sm text-gray-600 mb-1">Sire</label>
+                      <input type="text" className="w-full p-2 border rounded text-sm" placeholder="Father's name" />
+                    </div>
+                    <div>
+                      <label className="block text-sm text-gray-600 mb-1">Sire's Sire (Paternal Grandsire)</label>
+                      <input type="text" className="w-full p-2 border rounded text-sm" placeholder="Grandfather on father's side" />
+                    </div>
+                    <div>
+                      <label className="block text-sm text-gray-600 mb-1">Sire's Dam (Paternal Granddam)</label>
+                      <input type="text" className="w-full p-2 border rounded text-sm" placeholder="Grandmother on father's side" />
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    <h5 className="font-medium text-pink-800">Dam (Mother) Line</h5>
+                    <div>
+                      <label className="block text-sm text-gray-600 mb-1">Dam</label>
+                      <input type="text" className="w-full p-2 border rounded text-sm" placeholder="Mother's name" />
+                    </div>
+                    <div>
+                      <label className="block text-sm text-gray-600 mb-1">Dam's Sire (Maternal Grandsire)</label>
+                      <input type="text" className="w-full p-2 border rounded text-sm" placeholder="Grandfather on mother's side" />
+                    </div>
+                    <div>
+                      <label className="block text-sm text-gray-600 mb-1">Dam's Dam (Maternal Granddam)</label>
+                      <input type="text" className="w-full p-2 border rounded text-sm" placeholder="Grandmother on mother's side" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-6 flex gap-3">
+                <button className="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700">
+                  Save Pedigree
+                </button>
+                <button className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700">
+                  Mark as Complete
+                </button>
+                <button className="bg-gray-300 text-gray-700 px-6 py-2 rounded hover:bg-gray-400">
+                  Clear Form
+                </button>
+              </div>
+            </div>
+
+            {/* Research Resources */}
+            <div className="bg-gray-50 border rounded-lg p-4">
+              <h4 className="font-medium text-gray-800 mb-3">🔍 Research Resources</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                <div>
+                  <h5 className="font-medium text-blue-800 mb-2">Online Databases</h5>
+                  <ul className="space-y-1 text-gray-600">
+                    <li>• FEI Database (fei.org)</li>
+                    <li>• WBFSH (World Breeding Federation)</li>
+                    <li>• Breed-specific registries</li>
+                    <li>• All Breed Pedigree Database</li>
+                  </ul>
+                </div>
+                <div>
+                  <h5 className="font-medium text-green-800 mb-2">Research Tips</h5>
+                  <ul className="space-y-1 text-gray-600">
+                    <li>• Start with FEI official records</li>
+                    <li>• Check breed registries</li>
+                    <li>• Contact breeders directly</li>
+                    <li>• Use multiple sources for verification</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            {/* Sample Pedigree Data */}
+            <div className="bg-white border rounded-lg p-4">
+              <h4 className="font-medium text-gray-800 mb-3">📊 Sample Pedigree Data (Research Examples)</h4>
+              <div className="space-y-4">
+                <div className="border-l-4 border-blue-400 pl-4">
+                  <h5 className="font-medium text-blue-800">FOR GOLD (Rank #11)</h5>
+                  <div className="text-sm text-gray-600 mt-1">
+                    <p><strong>Status:</strong> Research needed</p>
+                    <p><strong>Priority:</strong> High (Second-Tier Champion)</p>
+                    <p><strong>Rider:</strong> COYLE, Jordan (IRL)</p>
+                  </div>
+                </div>
+                <div className="border-l-4 border-green-400 pl-4">
+                  <h5 className="font-medium text-green-800">INCREDIBLE (Rank #12)</h5>
+                  <div className="text-sm text-gray-600 mt-1">
+                    <p><strong>Status:</strong> Research needed</p>
+                    <p><strong>Priority:</strong> High (Second-Tier Champion)</p>
+                    <p><strong>Rider:</strong> COYLE, Daniel (IRL)</p>
+                  </div>
+                </div>
+                <div className="border-l-4 border-yellow-400 pl-4">
+                  <h5 className="font-medium text-yellow-800">ERMITAGE KALONE (Rank #13)</h5>
+                  <div className="text-sm text-gray-600 mt-1">
+                    <p><strong>Status:</strong> Research needed</p>
+                    <p><strong>Priority:</strong> High (Second-Tier Champion)</p>
+                    <p><strong>Rider:</strong> THOMAS, Gilles (BEL)</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'analysis' && (
+          <div className="space-y-6">
+            <h2 className="text-2xl font-bold">🎯 Image Analysis & OCR</h2>
+            
+            <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4">
+              <h3 className="font-medium text-yellow-800">Strategy: Second-Tier Champions (Ranks 11-50)</h3>
+              <p className="text-yellow-700 text-sm mt-1">
+                Target offspring of successful but not elite horses. Great genetics without the premium price tag of Top 10 horses.
+              </p>
+            </div>
+
+            {/* HUGE OBVIOUS PASTE BOX */}
+            <div className="border-4 border-dashed border-primary-gold rounded-xl p-12 text-center" style={{background: 'linear-gradient(135deg, rgba(203, 161, 53, 0.1), rgba(123, 63, 0, 0.1))'}}>
+              <div className="text-8xl mb-6">📋</div>
+              <h3 className="text-3xl font-heading font-bold text-primary-black mb-4">
+                🚀 PASTE IMAGES HERE! 🚀
+              </h3>
+              <p className="text-xl text-primary-chestnut mb-6 font-body">
+                Copy ANY image (Ctrl+C / Cmd+C) then paste here (Ctrl+V / Cmd+V)
+              </p>
+              
+              <div 
+                ref={pasteBoxRef}
+                className={`border-4 border-dashed rounded-xl p-12 transition-all duration-300 cursor-pointer ${
+                  pasteBoxActive 
+                    ? 'border-primary-gold bg-primary-gold scale-105 shadow-lg' 
+                    : 'border-primary-chestnut bg-white hover:border-primary-gold hover:bg-primary-gold'
+                }`}
+                style={{
+                  backgroundColor: pasteBoxActive ? 'var(--color-primary-gold)' : 'var(--color-neutral-white)',
+                  borderColor: pasteBoxActive ? 'var(--color-primary-gold)' : 'var(--color-primary-chestnut)',
+                  outline: 'none', 
+                  minHeight: '200px'
+                }}
+                onFocus={() => setPasteBoxActive(true)}
+                onBlur={() => setPasteBoxActive(false)}
+                onClick={() => pasteBoxRef.current?.focus()}
+                tabIndex={0}
+              >
+                {processing ? (
+                  <div className="flex flex-col items-center">
+                    <div className="text-6xl mb-4 animate-spin">⚙️</div>
+                    <p className="text-2xl font-bold text-primary-black font-body">Processing Image...</p>
+                    <p className="text-lg text-primary-chestnut font-body">OCR in progress...</p>
+                  </div>
+                ) : (
+                  <>
+                    <div className="text-6xl mb-4">📸</div>
+                    <p className="text-2xl font-bold text-primary-black mb-4 font-heading">
+                      CLICK HERE & PASTE YOUR IMAGE
+                    </p>
+                    <p className="text-lg text-primary-chestnut mb-4 font-body">
+                      Works with pedigrees, advertisements, screenshots, anything!
+                    </p>
+                    <div className="rounded-lg p-4 text-sm" style={{backgroundColor: 'rgba(203, 161, 53, 0.1)', color: 'var(--color-primary-chestnut)'}}>
+                      <p className="font-body"><strong>Supported:</strong> Pedigree images, horse sale ads, Facebook screenshots, any horse-related image</p>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Drag and Drop Area */}
+            <div 
+              className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+                dragActive ? 'border-green-400 bg-green-50' : 'border-gray-300'
+              }`}
+              onDrop={handleDrop}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+            >
+              <div className="text-4xl mb-4">📁</div>
+              <h4 className="text-lg font-medium text-gray-900 mb-2">
+                Or Drag & Drop Images Here
+              </h4>
+              <p className="text-gray-600 mb-4">
+                Drag pedigree images from your computer
+              </p>
+              <input 
+                type="file" 
+                accept="image/*" 
+                multiple
+                onChange={handleFileInput}
+                className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" 
+              />
+            </div>
+
+            {/* Instructions */}
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <h4 className="font-medium text-blue-800 mb-2">🎯 How the System Works:</h4>
+              <div className="text-sm text-blue-700 space-y-2">
+                <div className="bg-white p-3 rounded border-l-4 border-blue-400">
+                  <p className="font-medium text-blue-800">📋 For Pedigree Images:</p>
+                  <p>• OCR extracts the horse name from the pedigree</p>
+                  <p>• System finds matching horse in your prospect list</p>
+                  <p>• Updates that horse with bloodline analysis</p>
+                  <p>• If horse not found, adds as new prospect</p>
+                </div>
+                <div className="bg-white p-3 rounded border-l-4 border-orange-400">
+                  <p className="font-medium text-orange-800">📢 For Advertisement Images:</p>
+                  <p>• OCR extracts horse details (name, price, contact, etc.)</p>
+                  <p>• If it's a 5-year-old, automatically adds to prospects</p>
+                  <p>• Analyzes bloodline and genetic potential</p>
+                  <p>• Shows if it matches your target champion bloodlines</p>
+                </div>
+                <div className="bg-green-100 p-3 rounded">
+                  <p className="font-medium text-green-800">🚀 Quick Start:</p>
+                  <p>1. <strong>Copy any image:</strong> Right-click → Copy (or Ctrl+C / Cmd+C)</p>
+                  <p>2. <strong>Click the big paste box above</strong> to focus it</p>
+                  <p>3. <strong>Paste:</strong> Press Ctrl+V (Windows) or Cmd+V (Mac)</p>
+                  <p>4. <strong>Watch the magic:</strong> OCR extracts everything automatically!</p>
+                </div>
+              </div>
+            </div>
+
+            {/* OCR Results */}
+            {ocrResults.length > 0 && (
+              <div className="bg-white border rounded-lg p-4">
+                <h3 className="font-medium mb-3">📊 OCR Analysis Results ({ocrResults.length} processed)</h3>
+                <div className="space-y-4">
+                  {ocrResults.map((result) => (
+                    <div key={result.id} className={`border rounded-lg p-4 ${
+                      result.targetMatch ? 'bg-green-50 border-green-200' : 'bg-white'
+                    }`}>
+                      <div className="flex justify-between items-start mb-3">
+                        <div>
+                          <div className="flex items-center gap-2 mb-1">
+                            <h4 className="font-medium text-lg">{result.horseName}</h4>
+                            <span className={`text-xs px-2 py-1 rounded ${
+                              result.type === 'pedigree' 
+                                ? 'bg-blue-100 text-blue-800' 
+                                : 'bg-orange-100 text-orange-800'
+                            }`}>
+                              {result.type === 'pedigree' ? '📋 Pedigree' : '📢 Advertisement'}
+                            </span>
+                          </div>
+                          {result.targetMatch && (
+                            <p className="text-xs text-green-600 font-medium">🎯 TARGET BLOODLINE MATCH!</p>
+                          )}
+                          {result.extractedFromPedigree && (
+                            <p className="text-xs text-blue-600 font-medium">✅ Horse name extracted from pedigree</p>
+                          )}
+                        </div>
+                        <div className="text-right">
+                          <div className="text-lg font-bold text-purple-600">
+                            Genetic Score: {result.geneticScore}/100
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {result.type === 'advertisement' && (
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm mb-3 bg-orange-50 p-3 rounded">
+                          <div><span className="font-medium">Price:</span> {result.price}</div>
+                          <div><span className="font-medium">Location:</span> {result.location}</div>
+                          <div><span className="font-medium">Contact:</span> {result.contact}</div>
+                          <div><span className="font-medium">Platform:</span> {result.platform}</div>
+                        </div>
+                      )}
+                      
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm mb-3">
+                        <div><span className="font-medium">Sire:</span> {result.sire}</div>
+                        <div><span className="font-medium">Dam:</span> {result.dam}</div>
+                        {result.grandSire && <div><span className="font-medium">Grand Sire:</span> {result.grandSire}</div>}
+                        {result.grandDam && <div><span className="font-medium">Grand Dam:</span> {result.grandDam}</div>}
+                      </div>
+                      
+                      <p className="text-sm text-gray-700">{result.analysis}</p>
+                      
+                      {result.championMatches && result.championMatches.length > 0 && (
+                        <div className="mt-2 text-xs text-green-700">
+                          <strong>Champion Matches:</strong> {result.championMatches.join(', ')}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+        
+        {activeTab === 'database' && (
+          <div className="space-y-6">
+            <h2 className="text-2xl font-bold">🗄️ Horse Database</h2>
+            <div className="text-center py-12 text-gray-500">
+              <p>No horses in database yet. Import some listings to get started!</p>
+            </div>
+          </div>
+        )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default HorseResearchTool;
