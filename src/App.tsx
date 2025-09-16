@@ -3,6 +3,7 @@ import { Header } from "./components/Header";
 import { ChampionDatabase } from "./components/ChampionDatabase";
 import { ProspectHorses } from "./components/ProspectHorses";
 import { BloodlineAnalysis } from "./components/BloodlineAnalysis";
+import { ChampionPredictor } from "./components/ChampionPredictor";
 
 export default function App() {
   const [activeSection, setActiveSection] = useState("champions");
@@ -15,6 +16,8 @@ export default function App() {
         return <ProspectHorses />;
       case "bloodlines":
         return <BloodlineAnalysis />;
+      case "predictor":
+        return <ChampionPredictor />;
       default:
         return <ChampionDatabase />;
     }
