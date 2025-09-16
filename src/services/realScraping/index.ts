@@ -5,6 +5,7 @@ import { feiScraper } from './feiScraper';
 import { usefScraper } from './usefScraper';
 import { showGroundsLiveScraper } from './showgroundsliveScraper';
 import { Horse, Result, Event, FEIRanking } from '../../types/database';
+import axios from 'axios';
 
 export interface ScrapingOptions {
   year?: number;
@@ -34,6 +35,7 @@ export class RealScrapingService {
   private static instance: RealScrapingService;
   private cache: Map<string, any> = new Map();
   private readonly CACHE_DURATION = 30 * 60 * 1000; // 30 minutes
+  private readonly BACKEND_URL = 'http://localhost:3001/api';
 
   private constructor() {}
 
@@ -56,7 +58,117 @@ export class RealScrapingService {
     return this.cache.get(key);
   }
 
-  // Main scraping methods
+  // Backend API methods (CORS-free)
+  async scrapeAllSourcesViaBackend(options: ScrapingOptions = {}): Promise<ScrapingResults> {
+    const cacheKey = `backend_all_sources_${JSON.stringify(options)}`;
+    const cached = this.getCache(cacheKey);
+    if (cached) return cached;
+
+    console.log('🚀 Starting REAL scraping via backend API (no CORS issues)...');
+    
+    const allHorses: Horse[] = [];
+    const allResults: Result[] = [];
+    const allEvents: Event[] = [];
+    const allRankings: FEIRanking[] = [];
+    const errors: string[] = [];
+    const sources: string[] = [];
+
+    try {
+      // Check if backend is running
+      try {
+        await axios.get(`${this.BACKEND_URL}/health`, { timeout: 5000 });
+        console.log('✅ Backend server is running');
+      } catch (error) {
+        throw new Error('Backend server is not running. Please start it with: cd backend && npm start');
+      }
+
+      // Scrape FEI data via backend
+      console.log('📡 Scraping FEI data via backend...');
+      try {
+        const response = await axios.get(`${this.BACKEND_URL}/scrape/fei/rankings`, {
+          params: {
+            year: options.year || 2024,
+            discipline: options.discipline || 'Show Jumping'
+          },
+          timeout: 30000
+        });
+        
+        if (response.data.success) {
+          allRankings.push(...response.data.data);
+          sources.push('FEI');
+          console.log(`✅ FEI: Found ${response.data.data.length} rankings`);
+        } else {
+          errors.push(`FEI: ${response.data.error}`);
+        }
+      } catch (error: any) {
+        errors.push(`FEI: ${error.message}`);
+        console.error('FEI backend scraping error:', error);
+      }
+
+      // Scrape USEF data via backend
+      console.log('📡 Scraping USEF data via backend...');
+      try {
+        const response = await axios.get(`${this.BACKEND_URL}/scrape/usef/results`, {
+          timeout: 30000
+        });
+        
+        if (response.data.success) {
+          allResults.push(...response.data.data);
+          sources.push('USEF');
+          console.log(`✅ USEF: Found ${response.data.data.length} results`);
+        } else {
+          errors.push(`USEF: ${response.data.error}`);
+        }
+      } catch (error: any) {
+        errors.push(`USEF: ${error.message}`);
+        console.error('USEF backend scraping error:', error);
+      }
+
+      // Scrape ShowGroundsLive data via backend
+      console.log('📡 Scraping ShowGroundsLive data via backend...');
+      try {
+        const response = await axios.get(`${this.BACKEND_URL}/scrape/sgl/results`, {
+          timeout: 30000
+        });
+        
+        if (response.data.success) {
+          allResults.push(...response.data.data);
+          sources.push('ShowGroundsLive');
+          console.log(`✅ ShowGroundsLive: Found ${response.data.data.length} results`);
+        } else {
+          errors.push(`ShowGroundsLive: ${response.data.error}`);
+        }
+      } catch (error: any) {
+        errors.push(`ShowGroundsLive: ${error.message}`);
+        console.error('ShowGroundsLive backend scraping error:', error);
+      }
+
+    } catch (error: any) {
+      errors.push(`Backend connection: ${error.message}`);
+      console.error('Backend connection error:', error);
+    }
+
+    const results: ScrapingResults = {
+      horses: allHorses,
+      results: allResults,
+      events: allEvents,
+      rankings: allRankings,
+      summary: {
+        totalHorses: allHorses.length,
+        totalResults: allResults.length,
+        totalEvents: allEvents.length,
+        totalRankings: allRankings.length,
+        sources,
+        lastUpdated: new Date().toISOString(),
+        errors
+      }
+    };
+
+    this.setCache(cacheKey, results);
+    return results;
+  }
+
+  // Main scraping methods (fallback to direct scraping)
   async scrapeAllSources(options: ScrapingOptions = {}): Promise<ScrapingResults> {
     const cacheKey = `all_sources_${JSON.stringify(options)}`;
     const cached = this.getCache(cacheKey);
