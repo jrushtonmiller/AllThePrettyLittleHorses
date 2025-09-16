@@ -4,6 +4,7 @@ import { ChampionDatabase } from "./components/ChampionDatabase";
 import { ProspectHorses } from "./components/ProspectHorses";
 import { BloodlineAnalysis } from "./components/BloodlineAnalysis";
 import { ChampionPredictor } from "./components/ChampionPredictor";
+import { RealDataDemo } from "./components/RealDataDemo";
 import { AdminDashboard } from "./components/AdminDashboard";
 
 export default function App() {
@@ -19,6 +20,8 @@ export default function App() {
         return <BloodlineAnalysis />;
       case "predictor":
         return <ChampionPredictor />;
+      case "realdata":
+        return <RealDataDemo />;
       case "admin":
         return <AdminDashboard />;
       default:

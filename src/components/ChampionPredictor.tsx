@@ -398,7 +398,7 @@ export function ChampionPredictor() {
                 <SelectItem value="all">All Levels</SelectItem>
                 <SelectItem value="high">High (≥70%)</SelectItem>
                 <SelectItem value="medium">Medium (30-70%)</SelectItem>
-                <SelectItem value="low">Low (<30%)</SelectItem>
+                <SelectItem value="low">Low (&lt;30%)</SelectItem>
               </SelectContent>
             </Select>
 
