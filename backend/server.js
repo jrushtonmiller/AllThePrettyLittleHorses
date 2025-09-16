@@ -253,41 +253,31 @@ app.get('/api/scrape/usef/results', async (req, res) => {
     const $ = cheerio.load(response.data);
     console.log('USEF HTML content length:', response.data.length);
 
-    // Try multiple selectors to find result data
-    const selectors = [
-      '.result-row',
-      '.result-item',
-      '.competition-row',
-      'tr[class*="result"]',
-      'tr[class*="competition"]',
-      'table tr',
-      '.show-result',
-      '.horse-result'
-    ];
-
-    for (const selector of selectors) {
-      console.log(`Trying USEF selector: ${selector}`);
-      const elements = $(selector);
-      console.log(`Found ${elements.length} elements with selector: ${selector}`);
+    // Look for USEF content - search for competition and horse-related text
+    console.log('Searching for USEF competition data...');
+    
+    // Look for any text that might contain horse/competition data
+    $('*').each((index, element) => {
+      const $elem = $(element);
+      const text = $elem.text().trim();
       
-      if (elements.length > 0) {
-        elements.each((index, element) => {
-          const $row = $(element);
-          const text = $row.text().trim();
+      if (text.length > 20 && text.length < 500) {
+        // Look for patterns that suggest horse competition data
+        if (text.match(/competition|horse|rider|show|jumping|hunter|dressage|eventing/i)) {
+          console.log(`USEF content ${index}:`, text.substring(0, 150));
           
-          if (text.length > 10 && text.length < 300) {
-            console.log(`USEF row ${index} text:`, text.substring(0, 100));
-            
-            // Look for horse names and results
-            if (text.match(/[A-Z][a-z]+.*[A-Z][a-z]+/) && text.match(/\d+/)) {
-              const parts = text.split(/\s+/);
+          // Try to extract meaningful data
+          const lines = text.split('\n').filter(line => line.trim().length > 5);
+          lines.forEach((line, lineIndex) => {
+            if (line.match(/[A-Z][a-z]+.*[A-Z][a-z]+/) && line.match(/\d+/)) {
+              const parts = line.split(/\s+/);
               if (parts.length >= 3) {
                 const horseName = parts[0] + ' ' + parts[1];
                 const showName = parts[2] + ' ' + (parts[3] || '');
                 const placing = parseInt(parts[parts.length - 1]) || null;
                 
                 results.push({
-                  result_id: `usef_${Date.now()}_${index}`,
+                  result_id: `usef_content_${Date.now()}_${index}_${lineIndex}`,
                   horse_id: `usef_${horseName.replace(/\s+/g, '_')}_${Date.now()}`,
                   class_id: `usef_class_${showName.replace(/\s+/g, '_')}_${index}`,
                   placing: placing,
@@ -298,15 +288,10 @@ app.get('/api/scrape/usef/results', async (req, res) => {
                 });
               }
             }
-          }
-        });
-        
-        if (results.length > 0) {
-          console.log(`Found ${results.length} USEF results with selector: ${selector}`);
-          break;
+          });
         }
       }
-    }
+    });
 
     console.log(`Found ${results.length} USEF results`);
     res.json({ success: true, data: results, count: results.length });
@@ -370,60 +355,70 @@ app.get('/api/scrape/sgl/results', async (req, res) => {
     const $ = cheerio.load(response.data);
     console.log('ShowGroundsLive HTML content length:', response.data.length);
 
-    // Try multiple selectors to find result data
-    const selectors = [
-      '.result-row',
-      '.result-item',
-      '.show-row',
-      'tr[class*="result"]',
-      'tr[class*="show"]',
-      'table tr',
-      '.competition-result',
-      '.horse-result'
-    ];
-
-    for (const selector of selectors) {
-      console.log(`Trying ShowGroundsLive selector: ${selector}`);
-      const elements = $(selector);
-      console.log(`Found ${elements.length} elements with selector: ${selector}`);
-      
-      if (elements.length > 0) {
-        elements.each((index, element) => {
-          const $row = $(element);
-          const text = $row.text().trim();
+    // Look for horse show data in the HTML content
+    console.log('Searching for horse show data...');
+    
+    // Since the site uses JavaScript, let's look for any text content that might contain horse data
+    const allText = $('body').text();
+    console.log('Body text length:', allText.length);
+    console.log('First 500 characters of body text:', allText.substring(0, 500));
+    
+    // Look for specific patterns in the raw text
+    const lines = allText.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+    console.log(`Found ${lines.length} non-empty lines`);
+    
+    lines.forEach((line, index) => {
+      if (line.length > 5 && line.length < 200) {
+        // Look for horse show patterns
+        if (line.match(/harmon|classics|woodstock|horse|show|jumping|hunter|jumper|equitation/i)) {
+          console.log(`MATCH FOUND in line ${index}: ${line}`);
+          const showName = line;
+          const showType = line.match(/horse show|show jumping|hunter|jumper|equitation|harmon|classics/i)?.[0] || 'Horse Show';
           
-          if (text.length > 10 && text.length < 300) {
-            console.log(`ShowGroundsLive row ${index} text:`, text.substring(0, 100));
-            
-            // Look for horse names and results
-            if (text.match(/[A-Z][a-z]+.*[A-Z][a-z]+/) && text.match(/\d+/)) {
-              const parts = text.split(/\s+/);
-              if (parts.length >= 3) {
-                const horseName = parts[0] + ' ' + parts[1];
-                const showName = parts[2] + ' ' + (parts[3] || '');
-                const placing = parseInt(parts[parts.length - 1]) || null;
-                
-                results.push({
-                  result_id: `sgl_${Date.now()}_${index}`,
-                  horse_id: `sgl_${horseName.replace(/\s+/g, '_')}_${Date.now()}`,
-                  class_id: `sgl_class_${showName.replace(/\s+/g, '_')}_${index}`,
-                  placing: placing,
-                  status: placing ? 'Placed' : 'DNP',
-                  faults: 0,
-                  source: 'SGL',
-                  result_raw_status: placing ? placing.toString() : 'DNP'
-                });
-              }
-            }
-          }
-        });
-        
-        if (results.length > 0) {
-          console.log(`Found ${results.length} ShowGroundsLive results with selector: ${selector}`);
-          break;
+          results.push({
+            result_id: `sgl_show_${Date.now()}_${index}`,
+            horse_id: `sgl_show_${showName.replace(/\s+/g, '_')}_${Date.now()}`,
+            class_id: `sgl_class_${showName.replace(/\s+/g, '_')}_${index}`,
+            placing: null,
+            status: 'Event',
+            faults: 0,
+            source: 'SGL',
+            result_raw_status: showType
+          });
         }
       }
-    }
+    });
+
+    // Look for table data
+    $('table tr').each((index, element) => {
+      const $row = $(element);
+      const text = $row.text().trim();
+      
+      if (text.length > 10 && text.length < 300) {
+        console.log(`ShowGroundsLive table row ${index}:`, text.substring(0, 100));
+        
+        // Look for horse names and results
+        if (text.match(/[A-Z][a-z]+.*[A-Z][a-z]+/) && text.match(/\d+/)) {
+          const parts = text.split(/\s+/);
+          if (parts.length >= 3) {
+            const horseName = parts[0] + ' ' + parts[1];
+            const showName = parts[2] + ' ' + (parts[3] || '');
+            const placing = parseInt(parts[parts.length - 1]) || null;
+            
+            results.push({
+              result_id: `sgl_table_${Date.now()}_${index}`,
+              horse_id: `sgl_${horseName.replace(/\s+/g, '_')}_${Date.now()}`,
+              class_id: `sgl_class_${showName.replace(/\s+/g, '_')}_${index}`,
+              placing: placing,
+              status: placing ? 'Placed' : 'DNP',
+              faults: 0,
+              source: 'SGL',
+              result_raw_status: placing ? placing.toString() : 'DNP'
+            });
+          }
+        }
+      }
+    });
 
     console.log(`Found ${results.length} ShowGroundsLive results`);
     res.json({ success: true, data: results, count: results.length });
