@@ -7,16 +7,18 @@ export interface Horse {
   registration_number?: string;
   fei_id?: string;
   usef_id?: string;
-  sex: 'Stallion' | 'Mare' | 'Gelding';
+  sex: 'Stallion' | 'Mare' | 'Gelding' | '' | string;
   breed?: string;
   dob: string; // YYYY-MM-DD
   owner?: string;
   trainer?: string;
   height_hands?: number;
   height_cm?: number;
+  color?: string;
   dam_name?: string;
   sire_name?: string;
   country: string;
+  source?: string; // Data source (FEI, USEF, SGL, etc.)
 }
 
 export interface Event {
@@ -25,7 +27,7 @@ export interface Event {
   venue: string;
   location: string;
   start_date: string; // YYYY-MM-DD
-  federation: 'FEI' | 'USEF' | 'SGL' | 'OTHER';
+  federation: 'FEI' | 'USEF' | 'SGL' | 'ShowGroundsLive' | 'OTHER';
 }
 
 export interface Class {
@@ -43,12 +45,13 @@ export interface Result {
   horse_id: string;
   class_id: string;
   placing?: number;
-  status: 'Placed' | 'R' | 'E' | 'DNP'; // R=Retired, E=Eliminated, DNP=Did Not Place
+  status: 'Placed' | 'R' | 'E' | 'DNP' | 'WD'; // R=Retired, E=Eliminated, DNP=Did Not Place, WD=Withdrawn
   faults?: number;
   time_seconds?: number;
   earnings_usd?: number;
-  source: 'FEI' | 'USEF' | 'SGL' | 'OTHER';
+  source: 'FEI' | 'USEF' | 'SGL' | 'ShowGroundsLive' | 'OTHER';
   result_raw_status: string; // Original status for traceability
+  class_height_cm?: number; // Height of the class in centimeters
 }
 
 export interface Relative {
@@ -63,6 +66,12 @@ export interface FEIRanking {
   discipline: string;
   rank_position: number;
   present_flag: boolean;
+  horse_name?: string;
+  rider_name?: string;
+  nation?: string;
+  points?: number;
+  fei_id?: string;
+  source?: string;
 }
 
 export interface Prediction {

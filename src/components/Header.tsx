@@ -1,4 +1,4 @@
-import { Search, Crown, TrendingUp, TreePine, Target, Settings, Database, Globe } from "lucide-react";
+import { Search, Crown, TrendingUp, TreePine, Target, Settings, Database, Globe, Zap } from "lucide-react";
 import { Button } from "./ui/button";
 
 interface HeaderProps {
@@ -13,6 +13,7 @@ export function Header({ activeSection, onSectionChange }: HeaderProps) {
     { id: "bloodlines", label: "Bloodline Analysis", icon: TrendingUp },
     { id: "predictor", label: "Champion Predictor", icon: Target },
     { id: "realdata", label: "Real Data Scraping", icon: Database },
+    { id: "realscraping", label: "Live Web Scraping", icon: Zap },
     { id: "comprehensive", label: "Global Data Sources", icon: Globe },
     { id: "admin", label: "Admin Dashboard", icon: Settings },
   ];

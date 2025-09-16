@@ -5,6 +5,7 @@ import { ProspectHorses } from "./components/ProspectHorses";
 import { BloodlineAnalysis } from "./components/BloodlineAnalysis";
 import { ChampionPredictor } from "./components/ChampionPredictor";
 import { RealDataDemo } from "./components/RealDataDemo";
+import { RealScrapingDemo } from "./components/RealScrapingDemo";
 import { ComprehensiveDataDemo } from "./components/ComprehensiveDataDemo";
 import { AdminDashboard } from "./components/AdminDashboard";
 
@@ -23,6 +24,8 @@ export default function App() {
         return <ChampionPredictor />;
       case "realdata":
         return <RealDataDemo />;
+      case "realscraping":
+        return <RealScrapingDemo />;
       case "comprehensive":
         return <ComprehensiveDataDemo />;
       case "admin":

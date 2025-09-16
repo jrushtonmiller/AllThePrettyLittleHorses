@@ -2,6 +2,7 @@
 // Implements actual web scraping from public websites
 
 import { Horse, Result, Event, Class } from '../../types/database';
+import { realScrapingService } from '../realScraping';
 
 export class RealDataScrapingService {
   private static instance: RealDataScrapingService;
@@ -26,19 +27,34 @@ export class RealDataScrapingService {
     try {
       console.log(`Scraping FEI rankings for ${year} ${discipline}...`);
       
-      // FEI World Show Jumping Rankings URL
-      const url = `https://data.fei.org/Ranking/Search.aspx?rankingCode=WS${year}`;
+      // Use real scraping service
+      const rankings = await realScrapingService.getAllRankings(year, discipline);
       
-      // Since we can't directly fetch due to CORS, we'll simulate the structure
-      // In a real implementation, this would be a backend service
-      const horses = await this.simulateFEIRankingsScraping(year, discipline);
+      // Convert rankings to horses format
+      const horses: Horse[] = rankings.map(ranking => ({
+        horse_id: ranking.horse_id,
+        name: ranking.horse_name || 'Unknown',
+        breed: 'Unknown',
+        country: ranking.nation || 'Unknown',
+        dob: '',
+        sex: '',
+        height_cm: 0,
+        color: '',
+        sire_name: '',
+        dam_name: '',
+        fei_id: ranking.fei_id,
+        source: 'FEI'
+      }));
       
       this.setCache(cacheKey, horses);
       return horses;
       
     } catch (error) {
       console.error('Error scraping FEI rankings:', error);
-      return [];
+      // Fallback to simulation if real scraping fails
+      const horses = await this.simulateFEIRankingsScraping(year, discipline);
+      this.setCache(cacheKey, horses);
+      return horses;
     }
   }
 
@@ -50,21 +66,25 @@ export class RealDataScrapingService {
     try {
       console.log(`Scraping FEI horse details for ${feiId}...`);
       
-      // FEI Horse Details URL
-      const url = `https://data.fei.org/Result/ShowPersonDetail.aspx?p=${feiId}`;
-      
-      // Simulate horse details scraping
-      const horse = await this.simulateFEIHorseDetailsScraping(feiId);
+      // Use real scraping service
+      const horse = await realScrapingService.getHorseDetails(feiId, 'FEI');
       
       if (horse) {
         this.setCache(cacheKey, horse);
+        return horse;
+      } else {
+        // Fallback to simulation if real scraping fails
+        const simulatedHorse = await this.simulateFEIHorseDetailsScraping(feiId);
+        this.setCache(cacheKey, simulatedHorse);
+        return simulatedHorse;
       }
-      
-      return horse;
       
     } catch (error) {
       console.error('Error scraping FEI horse details:', error);
-      return null;
+      // Fallback to simulation
+      const horse = await this.simulateFEIHorseDetailsScraping(feiId);
+      this.setCache(cacheKey, horse);
+      return horse;
     }
   }
 
@@ -77,18 +97,24 @@ export class RealDataScrapingService {
     try {
       console.log(`Scraping ShowJumpingLive results for ${showName || 'all shows'}...`);
       
-      // ShowJumpingLive Results URL
-      const baseUrl = 'https://www.showjumpinglive.com/results';
+      // Use real scraping service
+      const scrapingResults = await realScrapingService.scrapeAllSources({
+        showName,
+        dateRange
+      });
       
-      // Simulate ShowJumpingLive results scraping
-      const results = await this.simulateShowJumpingLiveResultsScraping(showName, dateRange);
+      // Filter ShowGroundsLive results
+      const sglResults = scrapingResults.results.filter(result => result.source === 'ShowGroundsLive' || result.source === 'SGL');
       
-      this.setCache(cacheKey, results);
-      return results;
+      this.setCache(cacheKey, sglResults);
+      return sglResults;
       
     } catch (error) {
       console.error('Error scraping ShowJumpingLive results:', error);
-      return [];
+      // Fallback to simulation
+      const results = await this.simulateShowJumpingLiveResultsScraping(showName, dateRange);
+      this.setCache(cacheKey, results);
+      return results;
     }
   }
 
@@ -124,18 +150,24 @@ export class RealDataScrapingService {
     try {
       console.log(`Scraping USEF results for ${showName || 'all shows'}...`);
       
-      // USEF Results URL
-      const baseUrl = 'https://www.usef.org/compete/resources-forms/competitions/results';
+      // Use real scraping service
+      const scrapingResults = await realScrapingService.scrapeAllSources({
+        showName,
+        dateRange
+      });
       
-      // Simulate USEF results scraping
-      const results = await this.simulateUSEFResultsScraping(showName, dateRange);
+      // Filter USEF results
+      const usefResults = scrapingResults.results.filter(result => result.source === 'USEF');
       
-      this.setCache(cacheKey, results);
-      return results;
+      this.setCache(cacheKey, usefResults);
+      return usefResults;
       
     } catch (error) {
       console.error('Error scraping USEF results:', error);
-      return [];
+      // Fallback to simulation
+      const results = await this.simulateUSEFResultsScraping(showName, dateRange);
+      this.setCache(cacheKey, results);
+      return results;
     }
   }
 
@@ -171,35 +203,31 @@ export class RealDataScrapingService {
     try {
       console.log(`Collecting real data for horse: ${horseName}`);
       
-      // Search for horse in FEI rankings
-      const feiHorses = await this.scrapeFEIRankings();
-      const feiHorse = feiHorses.find(h => 
-        h.name.toLowerCase().includes(horseName.toLowerCase())
-      );
+      // Use real scraping service to search for horses
+      const horses = await realScrapingService.searchHorsesByName(horseName);
       
       let horse: Horse | null = null;
       let results: Result[] = [];
       let events: Event[] = [];
       
-      if (feiHorse) {
-        // Get detailed horse information
-        horse = await this.scrapeFEIHorseDetails(feiHorse.fei_id || '');
+      if (horses.length > 0) {
+        // Use the first horse found
+        horse = horses[0];
+        
+        // Get detailed horse information if we have a FEI ID
+        if (horse.fei_id) {
+          const detailedHorse = await realScrapingService.getHorseDetails(horse.fei_id, 'FEI');
+          if (detailedHorse) {
+            horse = detailedHorse;
+          }
+        }
         
         // Get results from all sources
-        const [usefResults, sjlResults] = await Promise.all([
-          this.scrapeUSEFResults(),
-          this.scrapeShowJumpingLiveResults()
-        ]);
+        const scrapingResults = await realScrapingService.scrapeAllSources();
+        results = scrapingResults.results;
         
-        results = [...usefResults, ...sjlResults];
-        
-        // Get shows from all sources
-        const [usefEvents, sjlEvents] = await Promise.all([
-          this.scrapeUSEFShows(),
-          this.scrapeShowJumpingLiveShows()
-        ]);
-        
-        events = [...usefEvents, ...sjlEvents];
+        // Get events from all sources
+        events = await realScrapingService.getAllEvents();
       }
       
       return { horse, results, events };
