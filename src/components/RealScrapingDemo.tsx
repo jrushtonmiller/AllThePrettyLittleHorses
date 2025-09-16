@@ -98,6 +98,7 @@ export function RealScrapingDemo() {
       } catch (backendError) {
         console.warn('⚠️ Backend not available, falling back to direct scraping...');
         console.log('❌ This will show CORS errors (expected behavior)');
+        console.log('🚫 NO FAKE DATA - Only real data from live websites');
         results = await realScrapingService.scrapeAllSources({
           year: 2024,
           discipline: 'Show Jumping'
@@ -530,16 +531,29 @@ export function RealScrapingDemo() {
             </div>
 
             <div className="bg-red-50 p-4 rounded-lg">
-              <h4 className="font-medium text-red-900 mb-2">5. How to Fix CORS Errors</h4>
+              <h4 className="font-medium text-red-900 mb-2">5. NO FAKE DATA POLICY</h4>
               <p className="text-sm text-red-800 mb-2">
-                To eliminate CORS errors and get real data, start the backend server:
+                <strong>This app will NEVER show fake, simulated, or sample data.</strong> 
+                We only display real data from live websites. If scraping fails, you'll see empty results, not fake data.
               </p>
               <div className="bg-red-100 p-2 rounded text-xs font-mono text-red-900">
+                🚫 NO FAKE DATA<br/>
+                ✅ ONLY REAL DATA<br/>
+                📊 EMPTY RESULTS IF SCRAPING FAILS
+              </div>
+            </div>
+
+            <div className="bg-green-50 p-4 rounded-lg">
+              <h4 className="font-medium text-green-900 mb-2">6. How to Fix CORS Errors</h4>
+              <p className="text-sm text-green-800 mb-2">
+                To eliminate CORS errors and get real data, start the backend server:
+              </p>
+              <div className="bg-green-100 p-2 rounded text-xs font-mono text-green-900">
                 cd backend<br/>
                 npm install<br/>
                 npm start
               </div>
-              <p className="text-sm text-red-800 mt-2">
+              <p className="text-sm text-green-800 mt-2">
                 Then click "Check Backend" to verify it's running, and try scraping again.
               </p>
             </div>

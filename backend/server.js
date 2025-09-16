@@ -21,16 +21,27 @@ app.get('/api/scrape/fei/rankings', async (req, res) => {
     
     console.log(`Scraping FEI rankings for ${year} ${discipline}...`);
     
-    // Make request to FEI website
+    // Make request to FEI website with better headers
     const response = await axios.get('https://data.fei.org/Ranking/Search.aspx', {
       params: {
         year: year,
         discipline: discipline
       },
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.5',
+        'Accept-Encoding': 'gzip, deflate, br',
+        'DNT': '1',
+        'Connection': 'keep-alive',
+        'Upgrade-Insecure-Requests': '1',
+        'Sec-Fetch-Dest': 'document',
+        'Sec-Fetch-Mode': 'navigate',
+        'Sec-Fetch-Site': 'none',
+        'Cache-Control': 'max-age=0'
       },
-      timeout: 10000
+      timeout: 15000,
+      maxRedirects: 5
     });
 
     const $ = cheerio.load(response.data);
@@ -69,7 +80,9 @@ app.get('/api/scrape/fei/rankings', async (req, res) => {
     res.status(500).json({ 
       success: false, 
       error: error.message,
-      fallback: 'Using simulation data due to scraping error'
+      data: [],
+      count: 0,
+      note: 'No fake data - only real data from live websites. Websites are blocking our requests (403/500 errors).'
     });
   }
 });
@@ -119,7 +132,9 @@ app.get('/api/scrape/usef/results', async (req, res) => {
     res.status(500).json({ 
       success: false, 
       error: error.message,
-      fallback: 'Using simulation data due to scraping error'
+      data: [],
+      count: 0,
+      note: 'No fake data - only real data from live websites. Websites are blocking our requests.'
     });
   }
 });
@@ -169,7 +184,9 @@ app.get('/api/scrape/sgl/results', async (req, res) => {
     res.status(500).json({ 
       success: false, 
       error: error.message,
-      fallback: 'Using simulation data due to scraping error'
+      data: [],
+      count: 0,
+      note: 'No fake data - only real data from live websites. Websites are blocking our requests.'
     });
   }
 });
