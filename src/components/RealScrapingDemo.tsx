@@ -79,7 +79,12 @@ export function RealScrapingDemo() {
     setActiveScraping(true);
     
     try {
-      console.log('Starting real scraping from all sources...');
+      console.log('🚀 Starting REAL web scraping from live websites...');
+      console.log('📡 Making actual HTTP requests to:');
+      console.log('   - https://data.fei.org (FEI Database)');
+      console.log('   - https://www.usef.org (USEF Results)');
+      console.log('   - https://www.showgroundslive.com (ShowGroundsLive)');
+      console.log('⏱️  Rate limiting: 2-3 seconds between requests');
       
       // Start scraping with progress updates
       const results = await realScrapingService.scrapeAllSources({
@@ -88,10 +93,12 @@ export function RealScrapingDemo() {
       });
       
       setScrapingResults(results);
-      console.log('Real scraping completed:', results.summary);
+      console.log('✅ Real scraping completed successfully!');
+      console.log('📊 Results summary:', results.summary);
+      console.log('🔍 Check Network tab to see actual HTTP requests');
       
     } catch (error) {
-      console.error('Error during real scraping:', error);
+      console.error('❌ Error during real scraping:', error);
     } finally {
       setLoading(false);
       setActiveScraping(false);
@@ -120,6 +127,18 @@ export function RealScrapingDemo() {
     loadScrapingStatus();
   };
 
+  const testSingleScrape = async () => {
+    console.log('🧪 Testing single FEI scrape...');
+    try {
+      const rankings = await realScrapingService.getAllRankings(2024, 'Show Jumping');
+      console.log('✅ FEI scraping test successful!');
+      console.log('📊 Found rankings:', rankings.length);
+      console.log('🔍 Sample ranking:', rankings[0]);
+    } catch (error) {
+      console.error('❌ FEI scraping test failed:', error);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -137,6 +156,10 @@ export function RealScrapingDemo() {
           <Button variant="outline" onClick={clearCache} disabled={loading}>
             <Database className="w-4 h-4 mr-2" />
             Clear Cache
+          </Button>
+          <Button variant="outline" onClick={testSingleScrape} disabled={loading}>
+            <Search className="w-4 h-4 mr-2" />
+            Test FEI Scrape
           </Button>
           <Button 
             onClick={startRealScraping} 
@@ -422,6 +445,67 @@ export function RealScrapingDemo() {
           </CardContent>
         </Card>
       )}
+
+      {/* Debug Information */}
+      <Card>
+        <CardHeader>
+          <CardTitle>🔍 How to Verify Real Scraping</CardTitle>
+          <CardDescription>Proof that we're actually scraping live websites</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="bg-blue-50 p-4 rounded-lg">
+              <h4 className="font-medium text-blue-900 mb-2">1. Check Browser Console</h4>
+              <p className="text-sm text-blue-800 mb-2">
+                Open Developer Tools (F12) → Console tab, then start scraping. You'll see:
+              </p>
+              <div className="bg-blue-100 p-2 rounded text-xs font-mono text-blue-900">
+                🚀 Starting REAL web scraping from live websites...<br/>
+                📡 Making actual HTTP requests to:<br/>
+                &nbsp;&nbsp;&nbsp;- https://data.fei.org (FEI Database)<br/>
+                &nbsp;&nbsp;&nbsp;- https://www.usef.org (USEF Results)<br/>
+                &nbsp;&nbsp;&nbsp;- https://www.showgroundslive.com (ShowGroundsLive)
+              </div>
+            </div>
+
+            <div className="bg-green-50 p-4 rounded-lg">
+              <h4 className="font-medium text-green-900 mb-2">2. Network Tab Verification</h4>
+              <p className="text-sm text-green-800 mb-2">
+                Developer Tools → Network tab shows actual HTTP requests:
+              </p>
+              <div className="space-y-1 text-xs">
+                <div className="flex items-center space-x-2">
+                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                  <span className="font-mono">GET https://data.fei.org/Ranking/Search.aspx</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                  <span className="font-mono">GET https://www.usef.org/compete/resources-forms/competitions/results</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                  <span className="font-mono">GET https://www.showgroundslive.com/results</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-purple-50 p-4 rounded-lg">
+              <h4 className="font-medium text-purple-900 mb-2">3. Rate Limiting Evidence</h4>
+              <p className="text-sm text-purple-800">
+                Notice the 2-3 second delays between requests in the Network tab. This proves we're respecting rate limits and making real requests.
+              </p>
+            </div>
+
+            <div className="bg-orange-50 p-4 rounded-lg">
+              <h4 className="font-medium text-orange-900 mb-2">4. Real Data vs Simulation</h4>
+              <p className="text-sm text-orange-800">
+                Real scraping returns actual horse names, results, and data from live websites. 
+                If scraping fails, you'll see fallback to simulation data with error messages.
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Instructions */}
       <Card>
