@@ -29,6 +29,9 @@ import { Progress } from './ui/progress';
 import { HorseFeatures, Prediction } from '../types/database';
 import { predictionModelEngine } from '../services/predictionModel';
 import { featureEngineeringEngine } from '../services/featureEngineering';
+import { dataService } from '../services/dataService';
+import { HorseDetailCard } from './HorseDetailCard';
+import { HorseComparison } from './HorseComparison';
 
 interface ProspectHorse {
   id: string;
@@ -56,82 +59,107 @@ export function ChampionPredictor() {
   const [filterProbability, setFilterProbability] = useState('all');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [modelStatus, setModelStatus] = useState<any>(null);
+  const [selectedHorseDetail, setSelectedHorseDetail] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState('prospects');
 
-  // Initialize with sample prospect horses (5-year-olds)
+  // Initialize with data from data service
   useEffect(() => {
-    const sampleProspects: ProspectHorse[] = [
-      {
-        id: '1',
-        name: 'HELLO KITTY CAT',
-        age: '5',
-        sex: 'Mare',
-        breed: 'Warmblood',
-        country: 'USA',
-        dob: '2019-03-15',
-        dam_name: 'KITTY CAT',
-        sire_name: 'HELLO WORLD',
-        trainer: 'John Smith',
-        owner: 'ABC Stables'
-      },
-      {
-        id: '2',
-        name: 'EZY-DREAM',
-        age: '5',
-        sex: 'Gelding',
-        breed: 'Holsteiner',
-        country: 'GER',
-        dob: '2019-01-20',
-        dam_name: 'DREAM GIRL',
-        sire_name: 'EASY RIDER',
-        trainer: 'Maria Schmidt',
-        owner: 'German Equestrian Center'
-      },
-      {
-        id: '3',
-        name: 'PALO DUKE',
-        age: '5',
-        sex: 'Stallion',
-        breed: 'KWPN',
-        country: 'NED',
-        dob: '2019-05-10',
-        dam_name: 'PALO ALTO',
-        sire_name: 'DUKE OF WELLINGTON',
-        trainer: 'Hans van der Berg',
-        owner: 'Dutch Jumping Stables'
-      },
-      {
-        id: '4',
-        name: 'MLB GOODNESS GRACIOUS',
-        age: '5',
-        sex: 'Mare',
-        breed: 'Hanoverian',
-        country: 'GER',
-        dob: '2019-02-28',
-        dam_name: 'GRACIOUS LADY',
-        sire_name: 'MLB CHAMPION',
-        trainer: 'Klaus Weber',
-        owner: 'Bavarian Equestrian'
-      },
-      {
-        id: '5',
-        name: 'LAURILAN VALOS',
-        age: '5',
-        sex: 'Gelding',
-        breed: 'Irish Sport Horse',
-        country: 'IRL',
-        dob: '2019-04-12',
-        dam_name: 'LAURILAN LADY',
-        sire_name: 'VALOS STAR',
-        trainer: 'Sean O\'Connor',
-        owner: 'Irish Jumping Academy'
-      }
-    ];
-
-    setProspects(sampleProspects);
-    
-    // Initialize model status
+    loadProspects();
     setModelStatus(predictionModelEngine.getModelStatus());
   }, []);
+
+  const loadProspects = async () => {
+    try {
+      const horses = await dataService.getHorses({ ageRange: { min: 4, max: 6 } });
+      const sampleProspects: ProspectHorse[] = horses.map(horse => ({
+        id: horse.horse_id,
+        name: horse.name,
+        age: '5',
+        sex: horse.sex,
+        breed: horse.breed || 'Unknown',
+        country: horse.country,
+        dob: horse.dob,
+        dam_name: horse.dam_name,
+        sire_name: horse.sire_name,
+        trainer: horse.trainer,
+        owner: horse.owner
+      }));
+      
+      setProspects(sampleProspects);
+    } catch (error) {
+      console.error('Error loading prospects:', error);
+      // Fallback to sample data
+      const sampleProspects: ProspectHorse[] = [
+        {
+          id: '1',
+          name: 'HELLO KITTY CAT',
+          age: '5',
+          sex: 'Mare',
+          breed: 'Warmblood',
+          country: 'USA',
+          dob: '2019-03-15',
+          dam_name: 'KITTY CAT',
+          sire_name: 'HELLO WORLD',
+          trainer: 'John Smith',
+          owner: 'ABC Stables'
+        },
+        {
+          id: '2',
+          name: 'EZY-DREAM',
+          age: '5',
+          sex: 'Gelding',
+          breed: 'Holsteiner',
+          country: 'GER',
+          dob: '2019-01-20',
+          dam_name: 'DREAM GIRL',
+          sire_name: 'EASY RIDER',
+          trainer: 'Maria Schmidt',
+          owner: 'German Equestrian Center'
+        },
+        {
+          id: '3',
+          name: 'PALO DUKE',
+          age: '5',
+          sex: 'Stallion',
+          breed: 'KWPN',
+          country: 'NED',
+          dob: '2019-05-10',
+          dam_name: 'PALO ALTO',
+          sire_name: 'DUKE OF WELLINGTON',
+          trainer: 'Hans van der Berg',
+          owner: 'Dutch Jumping Stables'
+        },
+        {
+          id: '4',
+          name: 'MLB GOODNESS GRACIOUS',
+          age: '5',
+          sex: 'Mare',
+          breed: 'Hanoverian',
+          country: 'GER',
+          dob: '2019-02-28',
+          dam_name: 'GRACIOUS LADY',
+          sire_name: 'MLB CHAMPION',
+          trainer: 'Klaus Weber',
+          owner: 'Bavarian Equestrian'
+        },
+        {
+          id: '5',
+          name: 'LAURILAN VALOS',
+          age: '5',
+          sex: 'Gelding',
+          breed: 'Irish Sport Horse',
+          country: 'IRL',
+          dob: '2019-04-12',
+          dam_name: 'LAURILAN LADY',
+          sire_name: 'VALOS STAR',
+          trainer: 'Sean O\'Connor',
+          owner: 'Irish Jumping Academy'
+        }
+      ];
+
+      setProspects(sampleProspects);
+    }
+  };
 
   // Analyze prospects and generate predictions
   const analyzeProspects = async () => {
@@ -309,6 +337,16 @@ export function ChampionPredictor() {
         </div>
       </div>
 
+      {/* Main Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="prospects">Prospects</TabsTrigger>
+          <TabsTrigger value="comparison">Comparison</TabsTrigger>
+          <TabsTrigger value="details">Details</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="prospects" className="space-y-6">
+
       {/* Search and Filters */}
       <Card>
         <CardHeader>
@@ -426,7 +464,12 @@ export function ChampionPredictor() {
 
               {/* Action Buttons */}
               <div className="flex space-x-2 pt-2">
-                <Button size="sm" variant="outline" className="flex-1">
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  className="flex-1"
+                  onClick={() => setSelectedHorseDetail(prospect.id)}
+                >
                   <Eye className="w-3 h-3 mr-1" />
                   View Details
                 </Button>
@@ -501,6 +544,37 @@ export function ChampionPredictor() {
           </CardContent>
         </Card>
       )}
+
+        </TabsContent>
+
+        <TabsContent value="comparison">
+          <HorseComparison 
+            horseIds={selectedHorses}
+            onRemoveHorse={(horseId) => setSelectedHorses(selectedHorses.filter(id => id !== horseId))}
+            onClearAll={() => setSelectedHorses([])}
+          />
+        </TabsContent>
+
+        <TabsContent value="details">
+          {selectedHorseDetail ? (
+            <HorseDetailCard 
+              horseId={selectedHorseDetail}
+              onClose={() => setSelectedHorseDetail(null)}
+            />
+          ) : (
+            <Card>
+              <CardContent className="p-8 text-center">
+                <Eye className="w-12 h-12 text-stone-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-stone-900 mb-2">No Horse Selected</h3>
+                <p className="text-stone-600">
+                  Click "View Details" on any prospect to see their detailed analysis.
+                </p>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+      </Tabs>
     </div>
   );
 }

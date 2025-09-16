@@ -1,4 +1,4 @@
-import { Search, Crown, TrendingUp, TreePine, Target } from "lucide-react";
+import { Search, Crown, TrendingUp, TreePine, Target, Settings } from "lucide-react";
 import { Button } from "./ui/button";
 
 interface HeaderProps {
@@ -12,6 +12,7 @@ export function Header({ activeSection, onSectionChange }: HeaderProps) {
     { id: "prospects", label: "Prospect Horses", icon: Search },
     { id: "bloodlines", label: "Bloodline Analysis", icon: TrendingUp },
     { id: "predictor", label: "Champion Predictor", icon: Target },
+    { id: "admin", label: "Admin Dashboard", icon: Settings },
   ];
 
   return (

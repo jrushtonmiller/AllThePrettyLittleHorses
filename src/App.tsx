@@ -4,6 +4,7 @@ import { ChampionDatabase } from "./components/ChampionDatabase";
 import { ProspectHorses } from "./components/ProspectHorses";
 import { BloodlineAnalysis } from "./components/BloodlineAnalysis";
 import { ChampionPredictor } from "./components/ChampionPredictor";
+import { AdminDashboard } from "./components/AdminDashboard";
 
 export default function App() {
   const [activeSection, setActiveSection] = useState("champions");
@@ -18,6 +19,8 @@ export default function App() {
         return <BloodlineAnalysis />;
       case "predictor":
         return <ChampionPredictor />;
+      case "admin":
+        return <AdminDashboard />;
       default:
         return <ChampionDatabase />;
     }
